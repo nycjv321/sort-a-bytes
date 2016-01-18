@@ -34,6 +34,39 @@ func createPdf(input []byte) (outputFile string, e error)  {
   }
 }
 
+func sanityCheck(r *gin.Engine) {
+  r.GET("/sanity-check.json", func(c *gin.Context) {
+    var sanity = *GetSanityCheck()
+    if !sanity.latex || !sanity.convert {
+      c.JSON(500, gin.H{
+        "latex-installed": sanity.latex,
+        "pdflatex-installed": sanity.pdflatex,
+        "convert-installed": sanity.convert,
+        "description": "Both of these commands are required in order to run this application." +
+        "\n Please install imagemagick and latex.\n\n See ''http://www.imagemagick.org/index.php'' " +
+        " and ''https://www.latex-project.org/'' for more information.",
+      })
+
+    } else {
+      c.JSON(200, gin.H{
+        "latex-installed": sanity.latex,
+        "pdflatex-installed": sanity.pdflatex,
+        "convert-installed": sanity.convert,
+      })
+
+    }
+  })
+  r.GET("/sanity-check", func(c *gin.Context) {
+    var sanity = *GetSanityCheck()
+    c.HTML(200, "sanity-check.tmpl", gin.H{
+      "latex": sanity.latex,
+      "pdflatex": sanity.pdflatex,
+      "convert": sanity.convert,
+    })
+
+  })
+}
+
 func process(r *gin.Engine) {
 
     r.POST("/process", func(c *gin.Context) {
@@ -52,14 +85,14 @@ func process(r *gin.Engine) {
           outputFile, err := createPdf(o)
 
           if err != nil {
-            c.String(501, err.Error())
+            c.String(500, err.Error())
           }
 
           if f == "png" {
             var png, err = convert.PdfToPng(outputFile, 300)
 
             if err != nil {
-              c.String(502, err.Error())
+              c.String(500, err.Error())
             }
             c.File(png)
             os.Remove(png)
@@ -76,9 +109,12 @@ func process(r *gin.Engine) {
     })
 }
 
+
 func main() {
   r := gin.Default()
+  r.LoadHTMLGlob("views/*")
   process(r)
+  sanityCheck(r)
 
   r.Run(":8080") // listen and serve on 0.0.0.0:8080
 }

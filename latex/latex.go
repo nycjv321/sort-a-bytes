@@ -8,8 +8,6 @@ import(
   "errors"
 )
 
-
-
 func CreatePdf(tex string) (err error) {
 
   cmd := exec.Command("pdflatex")
