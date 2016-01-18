@@ -1,0 +1,17 @@
+<html>
+<body>
+  <h1>
+      Latex-Server Sanity Check
+  </h1>
+  <h2>Use this page to check for configuration issues</h2>
+  <div>
+    <h3>Are the required applications installed?</h3>
+    <ul>
+      {{ range $key, $value := . }}
+        <li><strong>{{ $key }}</strong>: {{ $value }}</li>
+      {{ end }}
+    </ul>
+
+  </div>
+</body>
+</html>
