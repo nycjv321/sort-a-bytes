@@ -5,8 +5,8 @@ import(
   "io/ioutil"
   "os"
   "errors"
-  "nycjv321.com/latex-server/latex"
-  "nycjv321.com/latex-server/convert"
+  "nycjv321.com/sort-a-bytes/latex"
+  "nycjv321.com/sort-a-bytes/convert"
 )
 
 func randomDirectory() (randomDirectory string) {
@@ -18,7 +18,6 @@ func randomDirectory() (randomDirectory string) {
     return output
   }
 }
-
 
 func createPdf(input []byte) (outputFile string, e error)  {
   var err = latex.CreatePdf(string(input))
@@ -36,25 +35,22 @@ func createPdf(input []byte) (outputFile string, e error)  {
 
 func sanityCheck(r *gin.Engine) {
   r.GET("/sanity-check.json", func(c *gin.Context) {
-    var sanity = *GetSanityCheck()
-    if !sanity.latex || !sanity.convert {
-      c.JSON(500, gin.H{
-        "latex-installed": sanity.latex,
-        "pdflatex-installed": sanity.pdflatex,
-        "convert-installed": sanity.convert,
-        "description": "Both of these commands are required in order to run this application." +
-        "\n Please install imagemagick and latex.\n\n See ''http://www.imagemagick.org/index.php'' " +
-        " and ''https://www.latex-project.org/'' for more information.",
-      })
 
-    } else {
-      c.JSON(200, gin.H{
-        "latex-installed": sanity.latex,
-        "pdflatex-installed": sanity.pdflatex,
-        "convert-installed": sanity.convert,
-      })
-
+    type tool struct {
+      Name    string `json:"name"`
+      Description string `json:"description"`
+      Homepage  string `json:"homepage"`
+      Installed bool `json:"installed"`
     }
+
+    var sanity = *GetSanityCheck()
+      c.JSON(200, gin.H{
+        "tools": []tool{
+          tool{Name: "LaTeX", Description: "Compiles Tex", Homepage: "https://www.latex-project.org", Installed: sanity.latex},
+          tool{Name: "pdflatex", Description: "Converts .tex to .pdf", Homepage: "https://www.latex-project.org", Installed: sanity.pdflatex},
+          tool{Name: "convert", Description: "Converts .pdf to .png", Homepage: "http://www.imagemagick.org/script/index.php", Installed: sanity.convert},
+          },
+      })
   })
   r.GET("/sanity-check", func(c *gin.Context) {
     var sanity = *GetSanityCheck()
@@ -112,7 +108,10 @@ func process(r *gin.Engine) {
 
 func main() {
   r := gin.Default()
-  r.LoadHTMLGlob("views/*")
+  r.LoadHTMLGlob("templates/*")
+  r.Static("js", "build/js")
+  r.Static("css", "build/css")
+
   process(r)
   sanityCheck(r)
 
