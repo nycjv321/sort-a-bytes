@@ -1,0 +1,27 @@
+{
+  "name": "sort-a-bytes",
+  "version": "1.0.0",
+  "description": "LaTeX WebServer",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nycjv321/sort-a-bytes.git"
+  },
+  "author": "Javier L. Velasquez",
+  "license": "SEE LICENSE IN LICENSE",
+  "bugs": {
+    "url": "https://github.com/nycjv321/sort-a-bytes/issues"
+  },
+  "homepage": "https://github.com/nycjv321/sort-a-bytes",
+  "dependencies": {
+    "babel-preset-react": "^6.3.13",
+    "babelify": "^7.2.0",
+    "bootstrap": "^3.3.6",
+    "fixed-data-table": "^0.6.0",
+    "react": "^0.14.6",
+    "react-bootstrap": "^0.28.2",
+    "react-dom": "^0.14.6"
+  },
+  "devDependencies": {
+    "gulp": "^3.9.0"
+  }
+}
