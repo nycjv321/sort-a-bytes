@@ -1,0 +1,4 @@
+#! /bin/bash
+browserify -t [ babelify --presets [ react ] ] src/js/*.js -o build/js/main.js --debug 
+gulp
+go build nycjv321.com/sort-a-bytes && ./sort-a-bytes
