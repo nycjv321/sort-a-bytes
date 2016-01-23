@@ -15,7 +15,7 @@ func GetSanityCheck() *SanityCheck {
 }
 
 func Installed(command string) bool {
-  cmd := exec.Command("command", "-v", command)
+  cmd := exec.Command("which", command)
 
   if err := cmd.Run(); err != nil {
    return false

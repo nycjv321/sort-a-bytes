@@ -1,0 +1,22 @@
+before_script:
+  - npm install
+  - directory=$(basename $(pwd))
+  - cd ..
+  - random=$RANDOM
+  - mkdir -p /tmp/$random/src/nycjv321.com
+  - path=/tmp/$random/src/nycjv321.com
+  - cp -a $directory $path
+  - cd $path
+  - export GOPATH=/tmp/$random
+  - go get github.com/gin-gonic/gin
+
+test_job:
+  stage: test
+  script: browserify -t [ babelify --presets [ react ] ] src/js/*.js -o build/js/main.js --debug
+  script: gulp
+  script: go test nycjv321.com/sort-a-bytes 
+
+cleanup_job:
+  stage: test
+  script: rm -r /tmp/$random
+  when: always
