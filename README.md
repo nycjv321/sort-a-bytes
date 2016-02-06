@@ -3,13 +3,13 @@
 Sort-a-Bytes is an webserver that is able to use the system's LaTeX installation to compile .tex files into PDF or render them as PNG.
 
 ### Requirements
-* Any modern nix box
+* Any modern *nix box
 * latex - to compile .tex files.(See below)
 * pdflatex - to convert .tex to pdf
 * convert (from imagemagick) - to convert pdfs to pngs
 
 
-Generally, each distro provides several different texlive packages starting with a barebones version to a "full" installation". The server will run any version. Keep in mind, depending on the version of LaTeX installed, the server will have the ability to compile certain LaTeX files. If you have the extra storage and want to avoid problems just install the "full" LaTeX package associated with your distro.
+Usually, your OS of choice will provide several different texlive packages to choose from. You will usually find a barebones version that takes about 300-400 MBs of space to a "full" installation that takes about 2-3 gigs of space. Keeping this in mind, the server will have the ability to compile LaTeX files based on the texlive installation package(s) choosen. If you have the extra storage and want to avoid problems, just install the "full" LaTeX package associated with your OS of choice.
 
 ### How to use
 ```sh
