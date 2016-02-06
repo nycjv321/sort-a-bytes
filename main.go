@@ -1,119 +1,132 @@
 package main
 
-import(
-  "github.com/gin-gonic/gin"
-  "io/ioutil"
-  "os"
-  "errors"
-  "nycjv321.com/sort-a-bytes/latex"
-  "nycjv321.com/sort-a-bytes/convert"
+import (
+	"errors"
+	"fmt"
+	"io/ioutil"
+	"os"
+
+	"github.com/gin-gonic/gin"
+	"nycjv321.com/sort-a-bytes/convert"
+	"nycjv321.com/sort-a-bytes/latex"
 )
 
 func randomDirectory() (randomDirectory string) {
-  output, err := ioutil.TempDir(os.TempDir(), "latex-server")
+	output, err := ioutil.TempDir(os.TempDir(), "latex-server")
 
-  if err != nil {
-    panic(err)
-  } else {
-    return output
-  }
+	if err != nil {
+		panic(err)
+	} else {
+		return output
+	}
 }
 
-func createPdf(input []byte) (outputFile string, e error)  {
-  var err = latex.CreatePdf(string(input))
+func createPdf(input []byte) (outputFile string, e error) {
+	var f, err = latex.CreatePdf(string(input))
 
-  if err != nil {
-    return "", err
-  }
+	if err != nil {
+		return "", err
+	}
 
-  if _, err = os.Stat("article.pdf"); os.IsNotExist(err) {
-    return "", errors.New("Could not create: article.pdf")
-  } else {
-    return "article.pdf", nil
-  }
+	if _, err = os.Stat(f); os.IsNotExist(err) {
+		return "", errors.New("Could not create: output pdf")
+	} else {
+		return f, nil
+	}
 }
 
 func sanityCheck(r *gin.Engine) {
-  r.GET("/sanity-check.json", func(c *gin.Context) {
+	r.GET("/sanity-check.json", func(c *gin.Context) {
 
-    type tool struct {
-      Name    string `json:"name"`
-      Description string `json:"description"`
-      Homepage  string `json:"homepage"`
-      Installed bool `json:"installed"`
-    }
+		type tool struct {
+			Name        string `json:"name"`
+			Description string `json:"description"`
+			Homepage    string `json:"homepage"`
+			Installed   bool   `json:"installed"`
+		}
 
-    var sanity = *GetSanityCheck()
-      c.JSON(200, gin.H{
-        "tools": []tool{
-          tool{Name: "LaTeX", Description: "Compiles Tex", Homepage: "https://www.latex-project.org", Installed: sanity.latex},
-          tool{Name: "pdflatex", Description: "Converts .tex to .pdf", Homepage: "https://www.latex-project.org", Installed: sanity.pdflatex},
-          tool{Name: "convert", Description: "Converts .pdf to .png", Homepage: "http://www.imagemagick.org/script/index.php", Installed: sanity.convert},
-          },
-      })
-  })
-  r.GET("/sanity-check", func(c *gin.Context) {
-    var sanity = *GetSanityCheck()
-    c.HTML(200, "sanity-check.tmpl", gin.H{
-      "latex": sanity.latex,
-      "pdflatex": sanity.pdflatex,
-      "convert": sanity.convert,
-    })
+		var sanity = *GetSanityCheck()
+		c.JSON(200, gin.H{
+			"tools": []tool{
+				tool{Name: "LaTeX", Description: "Compiles Tex", Homepage: "https://www.latex-project.org", Installed: sanity.latex},
+				tool{Name: "pdflatex", Description: "Converts .tex to .pdf", Homepage: "https://www.latex-project.org", Installed: sanity.pdflatex},
+				tool{Name: "convert", Description: "Converts .pdf to .png", Homepage: "http://www.imagemagick.org/script/index.php", Installed: sanity.convert},
+			},
+		})
+	})
+	r.GET("/sanity-check", func(c *gin.Context) {
+		var sanity = *GetSanityCheck()
+		c.HTML(200, "sanity-check.tmpl", gin.H{
+			"latex":    sanity.latex,
+			"pdflatex": sanity.pdflatex,
+			"convert":  sanity.convert,
+		})
 
-  })
+	})
+}
+
+type Message struct {
+	Value string `json:value`
 }
 
 func process(r *gin.Engine) {
 
-    r.POST("/process", func(c *gin.Context) {
-      f := c.DefaultQuery("format", "pdf")
-      o, err := ioutil.ReadAll(c.Request.Body)
-      if len(o) == 0 {
-        c.String(400, "Empty data is not a valid form of input")
-      } else if err != nil {
-        c.String(400, err.Error())
-      } else {
-        if f == "pdf" || f == "png" {
+	r.POST("/process", func(c *gin.Context) {
+		f := c.DefaultQuery("format", "pdf")
+		o, err := ioutil.ReadAll(c.Request.Body)
+		if err != nil {
+			c.String(400, err.Error())
+		} else if len(o) == 0 {
 
-          randomDirectory := randomDirectory()
-          os.Chdir(randomDirectory)
+			msg := Message{Value: "Empty Input is Not Valid Form Submission"}
 
-          outputFile, err := createPdf(o)
+			c.JSON(400, msg)
+		} else {
+			if f == "pdf" || f == "png" {
 
-          if err != nil {
-            c.String(500, err.Error())
-          }
+				randomDirectory := randomDirectory()
+				os.Chdir(randomDirectory)
 
-          if f == "png" {
-            var png, err = convert.PdfToPng(outputFile, 300)
+				outputFile, err := createPdf(o)
 
-            if err != nil {
-              c.String(500, err.Error())
-            }
-            c.File(png)
-            os.Remove(png)
+				if err != nil {
+					c.String(500, err.Error())
+				}
 
-          } else if f == "pdf" {
-            c.File("article.pdf")
-          }
+				if f == "png" {
+					var png, err = convert.PdfToPng(outputFile, 300)
 
-          os.Remove(outputFile)
-        } else {
-          c.String(400, f + " is an unsupported format")
-        }
-      }
-    })
+					if err != nil {
+						c.String(500, err.Error())
+					}
+					c.File(png)
+					os.Remove(png)
+
+				} else if f == "pdf" {
+
+					c.File(outputFile)
+				}
+
+				os.Remove(outputFile)
+			} else {
+				msg := Message{Value: fmt.Sprintf("\"%v\" was an invalid format", f)}
+				c.JSON(400, msg)
+			}
+		}
+	})
 }
 
+func Gin() *gin.Engine {
+	r := gin.Default()
+	r.LoadHTMLGlob("templates/*")
+	r.Static("js", "build/js")
+	r.Static("css", "build/css")
+
+	process(r)
+	sanityCheck(r)
+	return r
+}
 
 func main() {
-  r := gin.Default()
-  r.LoadHTMLGlob("templates/*")
-  r.Static("js", "build/js")
-  r.Static("css", "build/css")
-
-  process(r)
-  sanityCheck(r)
-
-  r.Run(":8080") // listen and serve on 0.0.0.0:8080
+	Gin().Run(":8080") // listen and serve on 0.0.0.0:8080
 }
