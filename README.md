@@ -1,6 +1,6 @@
 # Sort-a-Bytes
 
-Sort-a-Bytes is an webserver that is able to use the system's LaTeX installation to compile .tex files into PDF or render them as PNG.
+Sort-a-Bytes is a webserver that is able to use the system's LaTeX installation to compile .tex files into PDF or render them as PNG.
 
 ### Requirements
 * Any modern *nix box
