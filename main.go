@@ -66,7 +66,7 @@ func sanityCheck(r *gin.Engine) {
 }
 
 type Message struct {
-	Value string `json:value`
+	Value string `json:"value"`
 }
 
 func process(r *gin.Engine) {
@@ -75,39 +75,32 @@ func process(r *gin.Engine) {
 		f := c.DefaultQuery("format", "pdf")
 		o, err := ioutil.ReadAll(c.Request.Body)
 		if err != nil {
-			c.String(400, err.Error())
+			c.JSON(400, Message{Value: err.Error()})
 		} else if len(o) == 0 {
-
-			msg := Message{Value: "Empty Input is Not Valid Form Submission"}
-
-			c.JSON(400, msg)
+			c.JSON(400, Message{Value: "Empty Input is Not Valid Form Submission"})
 		} else {
 			if f == "pdf" || f == "png" {
-
 				randomDirectory := randomDirectory()
 				os.Chdir(randomDirectory)
 
 				outputFile, err := createPdf(o)
 
 				if err != nil {
-					c.String(500, err.Error())
-				}
+					c.JSON(500, Message{Value: err.Error()})
+				} else {
+					if f == "png" {
+						var png, err = convert.PdfToPng(outputFile, 300)
+						if err != nil {
+							c.String(500, err.Error())
+						}
+						c.File(png)
+						os.Remove(png)
 
-				if f == "png" {
-					var png, err = convert.PdfToPng(outputFile, 300)
-
-					if err != nil {
-						c.String(500, err.Error())
+					} else if f == "pdf" {
+						c.File(outputFile)
 					}
-					c.File(png)
-					os.Remove(png)
-
-				} else if f == "pdf" {
-
-					c.File(outputFile)
+					os.Remove(outputFile)
 				}
-
-				os.Remove(outputFile)
 			} else {
 				msg := Message{Value: fmt.Sprintf("\"%v\" was an invalid format", f)}
 				c.JSON(400, msg)

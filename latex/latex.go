@@ -4,13 +4,32 @@ import (
 	"bytes"
 	"errors"
 	"io"
+	"io/ioutil"
 	"os/exec"
 	"regexp"
 	"strings"
 )
 
-func CreatePdf(tex string) (path string, err error) {
+func getLog() (log string) {
+	entries, err := ioutil.ReadDir(".")
+	if err != nil {
+		return ""
+	} else {
+		for i := 0; i < len(entries); i++ {
+			if strings.Contains(entries[i].Name(), ".log") {
+				log, err := ioutil.ReadFile(entries[i].Name())
+				if err != nil {
+					return ""
+				} else {
+					return string(log)
+				}
+			}
+		}
+		return ""
+	}
+}
 
+func CreatePdf(tex string) (path string, err error) {
 	cmd := exec.Command("pdflatex")
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
@@ -35,7 +54,12 @@ func CreatePdf(tex string) (path string, err error) {
 	s := buf.String() // Does a complete copy of the bytes in the buffer.
 
 	if err := cmd.Wait(); err != nil {
-		return "", err
+		log := getLog()
+		if len(log) > 0 {
+			return "", errors.New(log)
+		} else {
+			return "", errors.New("Unable to compile .tex. Unable to read log")
+		}
 	} else {
 		if !strings.Contains(s, "Output written") {
 			return "", errors.New(s)
@@ -44,5 +68,4 @@ func CreatePdf(tex string) (path string, err error) {
 			return regex.FindString(s), nil
 		}
 	}
-	return "", err
 }
